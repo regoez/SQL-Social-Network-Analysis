@@ -1,0 +1,52 @@
+Q1
+For every situation where student A likes student B, but student B likes a different student C, return the names and grades of A, B, and C.
+
+SELECT H1.name, H1.grade, H2.name, H2.grade, H3.name, H3.grade
+FROM Highschooler H1, Highschooler H2, Highschooler H3, Likes L1, Likes L2
+Where L1.ID2 = L2.ID1 AND L2.ID2 != L1.ID1 AND L1.ID1 = H1.ID AND L2.ID1 = H2.ID AND L2.ID2 = H3.ID;
+
+Q2
+Find those students for whom all of their friends are in different grades from themselves. Return the students' names and grades.
+
+SELECT name, grade
+FROM Highschooler
+WHERE Highschooler.ID NOT IN (SELECT DISTINCT Highschooler1.ID FROM Friend LEFT JOIN Highschooler Highschooler1 ON Friend.ID1 = Highschooler1.ID LEFT JOIN Highschooler Highschooler2 ON friend.ID2 = Highschooler2.ID Where Highschooler1.grade = Highschooler2.grade);
+
+Q3
+What is the average number of friends per student? (Your result should be just one number.)
+
+SELECT AVG(friendcount)
+FROM (SELECT COUNT(*) friendcount
+FROM Friend
+GROUP BY ID1);
+
+Q4
+Find the number of students who are either friends with Cassandra or are friends of friends of Cassandra. Do not count Cassandra, even though technically she is a friend of a friend.
+
+SELECT COUNT(distinct Cassandra.ID2) + COUNT(distinct F2.ID2)
+FROM 
+(SELECT *
+FROM Highschooler
+LEFT JOIN Friend F1 ON Highschooler.ID = F1.ID1
+WHERE name = 'Cassandra') AS Cassandra
+LEFT JOIN Friend F2 ON Cassandra.ID2 = F2.ID1
+WHERE F2.ID2 != Cassandra.ID1 AND F2.ID2 NOT IN (SELECT DISTINCT ID1
+                                                 FROM Highschooler
+                                                 LEFT JOIN Friend F1 ON Highschooler.ID = F1.ID1
+                                                 WHERE name = 'Cassandra');
+
+Q5
+Find the name and grade of the student(s) with the greatest number of friends.
+
+SELECT name, grade
+FROM Highschooler
+LEFT JOIN (SELECT ID, COUNT(ID2) AS frdnum
+FROM Highschooler H1
+LEFT JOIN Friend F1 ON F1.ID1 = H1.ID
+GROUP BY ID) USING (ID)
+WHERE frdnum = (SELECT COUNT(ID2) AS max
+FROM Highschooler H1
+LEFT JOIN Friend F1 ON F1.ID1 = H1.ID
+GROUP BY ID
+ORDER BY max DESC
+LIMIT 1);
